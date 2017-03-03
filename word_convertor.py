@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 import pandas as pd
 from docx import Document
 
@@ -66,36 +67,73 @@ def text_or_table(block):
 # Look mom, I can do list comprehension ;)
 structure = pd.DataFrame(data = [(text_or_table(block),block.style.name) for block in iter_block_items(document)], columns = ["content", "style"])
 
-
-#style = pd.DataFrame(data = structure["Style"].unique(), columns = ["Style"])
-
-
-style_correspondance = {
-"Titre général" : "h1"
-"Heading 1" : "h1",
-"Heading 2" : "h2",
-"Heading 3" : "h3",
-"Heading 4" : "h4",
-"Heading 5" : "h5",
-"Heading 6" : "h6",
-"Titre de partie" : "h1",
-"Titre Annexe" : "h1",
-"Titre (Sommaire des réponses)" : "h1",
-"Réponse" : "i",
-"Puce Reco + Italique" : "i"
-"ENCADRÉ - Titre" : 
-"ENCADRÉ - Texte"
-
-}
-
-default_tag = "p"
-
-structure["HTML"] = structure["style"].map(style_correspondance).fillna(default_tag)
-
-structure["web content"] = "<div><" + structure["HTML"] + ">" + structure["content"] + "</" + structure["HTML"] + "></div>"
+#structure["web content"] = "<" + structure["HTML"] + ">" + structure["content"] + "</" + structure["HTML"] + "></div>"
 
 
+style = pd.DataFrame(data = structure["style"].unique(), columns = ["style"])
+style["new-style"] = [re.sub('[-+()/°]', ' ', text) for text in style["style"]] #Remove special characters
+style["new-style"] = [re.sub(r"\s+", '-', text) for text in style["new-style"]] # Replace spaces with dash
+style["new-style"] = [text.lower() for text in style["new-style"]] # Lower
 
-structure["web content"].to_frame().to_csv("index2.html")
+style = dict(zip(style["style"],style["new-style"]))
+
+structure["new-style"] = structure["style"].map(style)     
+
+structure["web content"] = "<div class =\"" + structure["new-style"] + "\">" + structure["content"] + "</div>"
+
+header = """
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>C2C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Bootstrap– latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  </head>
+  <body>
+"""
+
+footer = """
+</body>
+</html>
+"""
+
+webpage = pd.Series(header).append(structure["web content"], ignore_index = True)
+webpage = webpage.append(pd.Series(footer), ignore_index = True)
+         
+with open('index.html', 'w') as myFile:
+    for line in webpage:
+        myFile.write(line + "\n")
 
 
+#style_correspondance = {
+#"Titre général" : "h1"
+#"Heading 1" : "h1",
+#"Heading 2" : "h2",
+#"Heading 3" : "h3",
+#"Heading 4" : "h4",
+#"Heading 5" : "h5",
+#"Heading 6" : "h6",
+#"Titre de partie" : "h1",
+#"Titre Annexe" : "h1",
+#"Titre (Sommaire des réponses)" : "h1",
+#"Réponse" : "i",
+#"Puce Reco + Italique" : "i"
+#"ENCADRÉ - Titre" : 
+#"ENCADRÉ - Texte"
+#
+#}
+#
+#default_tag = "p"
+#
+#structure["HTML"] = structure["style"].map(style_correspondance).fillna(default_tag)
+#
+#structure["web content"] = "<div><" + structure["HTML"] + ">" + structure["content"] + "</" + structure["HTML"] + "></div>"
+#
+#
+#
+#structure["web content"].to_frame().to_csv("index2.html")
+#
+#
