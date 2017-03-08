@@ -3,7 +3,8 @@ import re
 import pandas as pd
 from docx import Document
 
-document = Document('examples/RPT-ETAT-ACTIONNAIRE.docx')
+file = "examples/RPT-ETAT-ACTIONNAIRE.docx"
+document = Document(file)
 
 # Get the structure of the docx file text
 #text_df = pd.DataFrame(data = [(para.text, para.style.name) for para in document.paragraphs], columns = ("Text", "Style"))    
@@ -100,7 +101,11 @@ structure["class"] = structure["style"].map(style)
 
 # Add class tag
 structure["web content"] = "<div class =\"" + structure["class"] + "\">" + structure["web content"] + "</div>"
-
+         
+# Generate HTML footnotes
+from footnotes import gethtmlfootnotes
+footnotes = gethtmlfootnotes(file)
+         
 # HTML header
 header = """
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -120,12 +125,13 @@ header = """
 # HTML footer
 footer = """
     </div>
-</body>
+    </body>
 </html>
 """
 
-# Heater + content + footer
+# Heater + content + footnotes + footer
 webpage = pd.Series(header).append(structure["web content"], ignore_index = True)
+webpage = webpage.append(pd.Series(footnotes), ignore_index = True)
 webpage = webpage.append(pd.Series(footer), ignore_index = True)
 
 # Write the webpage
