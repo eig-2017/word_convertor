@@ -101,11 +101,24 @@ structure["class"] = structure["style"].map(style)
 
 # Add class tag
 structure["web content"] = "<div class =\"" + structure["class"] + "\">" + structure["web content"] + "</div>"
-         
+
+# Generate HTML images
+from images import get_images_dicts
+image_dict, relation_dict = get_images_dicts(file)
+structure["alpha content"] = structure["content"].apply(lambda x : re.sub('[^a-zA-Z]+', '', x))
+for index, row in structure.iterrows():
+    for text_before in image_dict:
+        len_text = len(structure["alpha content"][index])
+        end_text = image_dict[text_before][-len_text:]
+        if end_text == structure["alpha content"][index]:
+            image_target = relation_dict[text_before]
+            web_image = "<div><img src=\"" + image_target + "\" class=\"img-responsive\"></div>"
+            structure["web content"][index] = structure["web content"][index] + web_image
+
 # Generate HTML footnotes
-from footnotes import gethtmlfootnotes
-footnotes = gethtmlfootnotes(file)
-         
+from footnotes import get_html_footnotes
+footnotes = get_html_footnotes(file)
+
 # HTML header
 header = """
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
