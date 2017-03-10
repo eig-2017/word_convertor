@@ -13,10 +13,11 @@ elif child.tag == qn("w:footnoteReference"):
 import xml.etree.ElementTree as ET
 import zipfile
 
-nsmap = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
-         'wp':  ('http://schemas.openxmlformats.org/drawingml/2006/wordprocessing'
-         'Drawing')
-        }
+nsmap = {
+    'w':   ('http://schemas.openxmlformats.org/wordprocessingml/2006/main'),
+    'wp':  ('http://schemas.openxmlformats.org/drawingml/2006/wordprocessing'
+            'Drawing'),
+}
 
 def qn(tag):
     """
@@ -26,9 +27,9 @@ def qn(tag):
     uri = nsmap[prefix]
     return '{{{}}}{}'.format(uri, tagroot)
 
-def getfootnotes(xml):
+def get_footnotes(xml):
     """
-    Get a .xml file, return a dictionary of footnote's id an content
+    Get a .xml file, return a dictionary of footnote's id and content
     """
     footdict= {}
     root = ET.fromstring(xml)
@@ -43,14 +44,14 @@ def getfootnotes(xml):
                 footdict[f_id] = text
     return footdict
 
-def gethtmlfootnotes(file):
+def get_html_footnotes(file):
     """
     Get a .docx file, return a list of footnotes in HTML
     """
     # Unzip the docx in memory
     zipf = zipfile.ZipFile(file)
     # Get the footnote dictionary
-    footdict = getfootnotes(zipf.read('word/footnotes.xml'))   
+    footdict = get_footnotes(zipf.read('word/footnotes.xml'))   
     # Generate HTML from the dictionary
     footnotes = ["<p><sup id=\"fn" + key +  "\">" + key + "." + footdict[key] + "<a href=\"#ref" + key +"\" title=\"Retour au texte.\">↩</a></sup></p>"
                 for key in footdict]
